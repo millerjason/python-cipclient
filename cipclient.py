@@ -44,7 +44,7 @@ class SendThread(threading.Thread):
             if self.cip.connected is True and self.cip.restart_connection is False:
                 time_asleep_heartbeat += 0.01
                 if time_asleep_heartbeat >= 15:
-                    self.cip.tx_queue.put(b"\x0D\x00\x02\x00\x00")
+                    self.cip.tx_queue.put(b"\x0d\x00\x02\x00\x00")
                     time_asleep_heartbeat = 0
 
                 time_asleep_buttons += 0.01
@@ -85,7 +85,7 @@ class ReceiveThread(threading.Thread):
             try:
                 if self.cip.restart_connection is False:
                     rx = self.cip.socket.recv(4096)
-                    _logger.debug(f'RX: <{str(binascii.hexlify(rx), "ascii")}>')
+                    _logger.debug(f"RX: <{str(binascii.hexlify(rx), 'ascii')}>")
 
                     position = 0
                     length = len(rx)
@@ -206,7 +206,6 @@ class ConnectionThread(threading.Thread):
         warning_posted = False
 
         while not self._stop_event.is_set():
-
             try:
                 self.cip.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.cip.socket.settimeout(self.cip.timeout)
@@ -386,7 +385,7 @@ class CIPSocketClient:
     def _processPayload(self, ciptype, payload):
         """Process CIP packets."""
         _logger.debug(
-            f'> Type 0x{ciptype:02x} <{str(binascii.hexlify(payload), "ascii")}>'
+            f"> Type 0x{ciptype:02x} <{str(binascii.hexlify(payload), 'ascii')}>"
         )
         length = len(payload)
         restartRequired = False
@@ -422,7 +421,7 @@ class CIPSocketClient:
                     # end-of-query
                     _logger.debug("  End-of-query")
                     self.tx_queue.put(b"\x05\x00\x05\x00\x00\x02\x03\x1d")
-                    self.tx_queue.put(b"\x0D\x00\x02\x00\x00")
+                    self.tx_queue.put(b"\x0d\x00\x02\x00\x00")
                     self.connected = True
                     with self.join_lock:
                         for sigtype, joins in self.join["out"].items():
@@ -467,7 +466,7 @@ class CIPSocketClient:
             if length == 3 and payload == b"\xff\xff\x02":
                 _logger.error(f"! The specified IPID (0x{ipid_string}) does not exist")
                 restartRequired = True
-            elif length == 4 and payload == b"\x00\x00\x00\x1f":
+            elif length == 4 and payload == b"\x00\x00\x00\x03":
                 _logger.debug(f"  Registered IPID 0x{ipid_string}")
                 self.tx_queue.put(b"\x05\x00\x05\x00\x00\x02\x03\x00")
             else:
