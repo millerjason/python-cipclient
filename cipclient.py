@@ -18,7 +18,7 @@ class SendThread(threading.Thread):
         """Set up the CIP outgoing packet processing thread."""
         self._stop_event = threading.Event()
         self.cip = cip
-        threading.Thread.__init__(self, name="Send")
+        threading.Thread.__init__(self, name="Send", daemon=True)
 
     def run(self):
         """Start the CIP outgoing packet processing thread."""
@@ -75,7 +75,7 @@ class ReceiveThread(threading.Thread):
         """Set up the CIP incoming packet processing thread."""
         self._stop_event = threading.Event()
         self.cip = cip
-        threading.Thread.__init__(self, name="Receive")
+        threading.Thread.__init__(self, name="Receive", daemon=True)
 
     def run(self):
         """Start the CIP incoming packet processing thread."""
@@ -130,7 +130,7 @@ class EventThread(threading.Thread):
         """Set up the join event processing thread."""
         self._stop_event = threading.Event()
         self.cip = cip
-        threading.Thread.__init__(self, name="Event")
+        threading.Thread.__init__(self, name="Event", daemon=True)
 
     def run(self):
         """Start the join event processing thread."""
@@ -197,7 +197,7 @@ class ConnectionThread(threading.Thread):
         """Set up the socket management thread."""
         self._stop_event = threading.Event()
         self.cip = cip
-        threading.Thread.__init__(self, name="Connection")
+        threading.Thread.__init__(self, name="Connection", daemon=True)
 
     def run(self):
         """Start the socket management thread."""
@@ -290,6 +290,11 @@ class CIPSocketClient:
             "in": {"d": {}, "a": {}, "s": {}},
             "out": {"d": {}, "a": {}, "s": {}},
         }
+
+    def __del__(self):
+        """Clean up threads when the CIP client instance is destroyed."""
+        if self.connection_thread.is_alive():
+            self.stop()
 
     def start(self):
         """Start the CIP client instance."""
@@ -466,7 +471,7 @@ class CIPSocketClient:
             if length == 3 and payload == b"\xff\xff\x02":
                 _logger.error(f"! The specified IPID (0x{ipid_string}) does not exist")
                 restartRequired = True
-            elif length == 4 and payload == b"\x00\x00\x00\x03":
+            elif length == 4 and payload == b"\x00\x00\x00\x1f":
                 _logger.debug(f"  Registered IPID 0x{ipid_string}")
                 self.tx_queue.put(b"\x05\x00\x05\x00\x00\x02\x03\x00")
             else:
